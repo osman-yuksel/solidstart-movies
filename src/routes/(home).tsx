@@ -1,16 +1,16 @@
-import { For } from "solid-js";
-import { useRouteData, RouteDataArgs } from "solid-start";
-import { createServerData$ } from "solid-start/server";
-
-function API_KEY() {
-  return import.meta.env.VITE_TMDB_API_KEY as string;
-}
+import { For, Show } from "solid-js";
+import {
+  useRouteData,
+  RouteDataArgs,
+  createRouteData,
+  refetchRouteData,
+} from "solid-start";
 
 export function routeData({ params }: RouteDataArgs) {
-  return createServerData$(
+  return createRouteData(
     async () => {
       const response = await fetch(
-        `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY()}&language=en-US&page=1`
+        `${import.meta.env.VITE_HOSTNAME}/api/movies/popular`
       );
       return await response.json();
     },
@@ -25,11 +25,20 @@ export default function Home() {
       <h1 class="max-6-xs my-16 text-6xl font-thin uppercase text-sky-700">
         Home Page
       </h1>
-      <h2>{popularMovies.loading.toString()}</h2>
+      <button
+        class="border-2 border-black p-2"
+        onclick={() => {
+          refetchRouteData(["popularMovies"]);
+        }}
+      >
+        Refetch
+      </button>
       <ul>
-        <For each={popularMovies()?.results}>
-          {(movie) => <li>{movie.original_title}</li>}
-        </For>
+        <Show when={!popularMovies.loading} fallback={<div>loading...</div>}>
+          <For each={popularMovies()?.response.results}>
+            {(movie) => <li>{movie.title}</li>}
+          </For>
+        </Show>
       </ul>
     </main>
   );
